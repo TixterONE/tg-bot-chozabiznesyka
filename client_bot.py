@@ -3,8 +3,9 @@ import sqlite3
 import random
 from datetime import datetime, timedelta
 import time
+import os
 
-bot = telebot.TeleBot('')
+telebot.TeleBot(os.environ["bot_token"])
 
 
 #cписок бизнесов

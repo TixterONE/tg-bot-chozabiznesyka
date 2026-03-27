@@ -44,7 +44,7 @@ def init_db():
             cursor.execute(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}")
             print(f"хуйня {col_name} добавлена.")
         except sqlite3.OperationalError:
-            # Эта ошибка вылетит, если колонка уже есть — это нормально
+            #надо
             print(f"хуйня {col_name} уже существует, пропускаем.")
 
     conn.commit()

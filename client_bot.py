@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import time
 import os
 
-telebot.TeleBot(os.environ["bot_token"])
+bot = telebot.TeleBot(os.environ["bot_token"])
 
 
 #cписок бизнесов

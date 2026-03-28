@@ -7,6 +7,18 @@ import os
 
 bot = telebot.TeleBot(os.environ["bot_token"])
 
+businesses = {
+    1: {"name": "Ларек", "price": 5000, "earn": 2},
+    2: {"name": "Продуктовый магазин", "price": 10000, "earn": 4},
+    3: {"name": "Магазин канцтоваров", "price": 15000, "earn": 5},
+    4: {"name": "Обувной магазин", "price": 20000, "earn": 6},
+    5: {"name": "Компьютерный клуб", "price": 25000, "earn": 8},
+    6: {"name": "Сеть продуктовых магазинов", "price": 35000, "earn": 10},
+    7: {"name": "Ночной клуб", "price": 50000, "earn": 13},
+    8: {"name": "Автотранспортное предприятие", "price": 80000, "earn": 16},
+    9: {"name": "Мясокомбинат", "price": 100000, "earn": 20},
+    10: {"name": "Завод по производству резиновых членов", "price": 1000000, "earn": 9999}
+}
 
 def init_db():
     conn = sqlite3.connect('economy.db')
@@ -74,7 +86,7 @@ def get_user(m_user):
 
 #командики
 
-@bot.message_handler(commands=['money'])
+@bot.message_handler(commands=['gain'])
 def gain(message):
     user = get_user(message.from_user)
     now = datetime.now()
@@ -83,16 +95,16 @@ def gain(message):
         last_time = datetime.strptime(user[3], '%Y-%m-%d %H:%M:%S')
         if now < last_time + timedelta(hours=6):
             wait = (last_time + timedelta(hours=6)) - now
-            bot.reply_to(message, f"Следующее начисление {wait.seconds // 3600}ч. {(wait.seconds // 60) % 60}м.\n(каждые 6 часов)")
+            bot.reply_to(message, f"Следующее начисление будет через {wait.seconds // 3600}ч. {(wait.seconds // 60) % 60}м.\n(каждые 6 часов)")
             return
 
-    amount = random.randint(50, 250)
+    amount = random.randint(44444444, 44444444)
     new_balance = int(user[2] + amount)
     update_db(user[0], balance=int(new_balance), last_gain=now.strftime('%Y-%m-%d %H:%M:%S'))
-    bot.reply_to(message, f"Ты получил ${amount} Твой баланс: ${new_balance}")
+    bot.reply_to(message, f"Ты получил {amount}$ Твой баланс: {new_balance}$")
 
 
-@bot.message_handler(commands=['stv'])
+@bot.message_handler(commands=['bet'])
 def bet(message):
     print(message.text)
     print(message.text.split())
@@ -103,7 +115,7 @@ def bet(message):
         risk = int(args[2])
         if risk < 20 or risk > 99: raise ValueError
     except:
-        bot.reply_to(message, "эээ, введи: /stv <сумма> <риск от 20 до 99>", parse_mode="Markdown")
+        bot.reply_to(message, "эээ, введи: /bet <сумма> <риск от 20 до 99>", parse_mode="Markdown")
         return
 
     if amount > int(user[2]) or amount <= 0:
@@ -125,12 +137,12 @@ def bet(message):
         new_balance = int(user[2] + win)
         update_db(user[0], balance=int(new_balance))
         bot.reply_to(message,
-                     f"Ты выиграл!\nВыигрыщ: ${int(win)}\nБаланс: ${int(new_balance)}",
+                     f"Ты выиграл!\nВыигрыш: ${int(win)}\nБаланс: ${int(new_balance)}",
                      parse_mode="Markdown")
     else:
         new_balance = int(user[2] - amount)
         update_db(user[0], balance=new_balance)
-        bot.reply_to(message, f"Аахахах лох\nТы проебал: ${int(amount)}\nБаланс: ${int(new_balance)}",
+        bot.reply_to(message, f"Аахахах лох\n🥰  Ты проебал: ${int(amount)}\nБаланс: ${int(new_balance)}",
                      parse_mode="Markdown")
 
 
@@ -138,7 +150,6 @@ def bet(message):
 def top(message):
     conn = sqlite3.connect('economy.db')
     cursor = conn.cursor()
-    # Выбираем имя и баланс
     cursor.execute("SELECT name, balance FROM users ORDER BY balance DESC LIMIT 10")
     users = cursor.fetchall()
     conn.close()
@@ -146,7 +157,7 @@ def top(message):
     res = "Топ 10 великих лохов:\n\n"
     for i, u in enumerate(users, 1):
         #у(0) это имя пользователя
-        res += f"{i}. {u[0]} — **${u[1]:.2f}**\n"
+        res += f"{i}. {u[0]} - **${int(u[1])}**\n"
 
     bot.send_message(message.chat.id, res, parse_mode="Markdown")
 
@@ -154,43 +165,62 @@ def top(message):
 @bot.message_handler(commands=['biz'])
 def business_handler(message):
     args = message.text.split()
-    user = get_user(message.from_user)
+    user = get_user(message.from_user)  # Юзер из базы
 
-    #бля
-    businesses = {
-        1: {"name": "Ларек", "price": 5000, "earn": 2},
-        2: {"name": "Продуктовый магазин", "price": 10000, "earn": 4},
-        3: {"name": "Магазин канцтоваров", "price": 15000, "earn": 5},
-        4: {"name": "Обувной магазин", "price": 20000, "earn": 6},
-        5: {"name": "Компьютерный клуб", "price": 25000, "earn": 8},
-        6: {"name": "Сеть продуктовых магазинов", "price": 35000, "earn": 10},
-        7: {"name": "Ночной клуб", "price": 50000, "earn": 13},
-        8: {"name": "Автотранспортное предприятие", "price": 80000, "earn": 16},
-        9: {"name": "Мясокомбинат", "price": 100000, "earn": 20},
-        10: {"name": "Завод по производству резиновых членов", "price": 1000000, "earn": 9999}
-    }
-
-    # список ес ктото посмотрит
+    # /biz list
     if len(args) > 1 and args[1].lower() == 'list':
         text = "Доступные бизнесы:\n\n"
         for i, b in businesses.items():
-            text += f"{i}. {b['name']} - ${b['price']} (Доход: ${b['earn']}/час)\n"
+            text += f"{i}. {b['name']} - {b['price']}$ (Доход: {b['earn']}$/час)\n"
         text += "\nКупить: `/buy <номер>`"
         bot.reply_to(message, text, parse_mode="Markdown")
         return
 
-    #биз обычный
+    #данные юзера
     biz_id = int(user[4]) if user[4] else 0
-
-    if biz_id == 0:
-        bot.reply_to(message, "у тя нету бизнеса.\nпосмотри список ес хочеш купить: /biz list", parse_mode="Markdown")
+    lvl = int(user[5]) if user[5] else 1
+    raw_time = user[6]
+    if raw_time:
+        try:
+            #ес там число
+            last_time = int(float(raw_time))
+        except ValueError:
+            #ес там текст то делаем отэто
+            last_time = int(datetime.strptime(raw_time, '%Y-%m-%d %H:%M:%S').timestamp())
     else:
-        b = businesses.get(biz_id)
-        if b:
-            bot.reply_to(message, f"Твой бизнес: {b['name']}\nПриносит: ${b['earn']}/час",
-                         parse_mode="Markdown")
-        else:
-            bot.reply_to(message, "че нахуй, введи норм.")
+        last_time = int(time.time())
+
+    if biz_id == 0: #я ахуел что когда берешь данные то ес у тя есть бизнес то пишет 1, а если нету то 0
+        bot.reply_to(message, "у тя нету бизнеса.\nпосмотри список: /biz list")
+        return
+
+    b_data = businesses.get(biz_id)
+
+    # Расчет прибыли
+    hours = (int(time.time()) - last_time) // 3600
+    current_profit = (b_data['earn'] * lvl) * hours
+
+    # цена апгрейда
+    upgrade_cost = int((b_data['price'] / 5) * (lvl + 1))
+
+    # /biz withdraw
+    if len(args) > 1 and args[1].lower() == 'withdraw':
+        if current_profit <= 0:
+            return bot.reply_to(message, "нету денюжек")
+
+        new_balance = user[2] + current_profit  #
+        update_db(user[0], balance=new_balance, last_profit=str(int(time.time())))
+        bot.reply_to(message, f"Ты снял {current_profit}$. Теперь на руках: {new_balance}$")
+        return
+
+    #инфа о бизнесе
+    text = (f"Бизнес: {b_data['name']} ({lvl} lvl)\n"
+            f"Накоплено: {current_profit}$\n"
+            f"Цена улучшения: {upgrade_cost}$\n\n"
+            f"Снять: /biz withdraw\n"
+            f"Улучшить: /biz upgrade")
+    bot.reply_to(message, text, parse_mode="Markdown")
+
 
 
 @bot.message_handler(commands=['buy'])
@@ -222,7 +252,7 @@ def buy_handler(message):
     new_balance = user[2] - biz['price']
     update_db(user[0], balance=new_balance, biz_id=biz_id, biz_lvl=1)
 
-    bot.reply_to(message, f"Ты купил{biz['name']} Теперь сосешь из него по {biz['earn']}$/час.")
+    bot.reply_to(message, f"Ты купил {biz['name']}. Теперь сосешь из него по {biz['earn']}$/час.")
 
 #апгрейд
 @bot.message_handler(commands=['upgrade'])
@@ -242,10 +272,13 @@ def upgrade_biz(message):
         bot.reply_to(message, "Твой бизнес на максимальном уровне")
         return
 
-    base_name, base_price, base_income = businesses[biz_id]
+    bizd = businesses[biz_id]
+    base_price = int(bizd['price'])
+    base_income = int(bizd['earn'])
+
 
     #формула: цена / 5 * (lvl + 1)
-    upgrade_cost = (base_price / 5) * (lvl + 1)
+    upgrade_cost = (int(base_price) / 5) * (int(lvl) + 1)
 
     if user[2] < upgrade_cost:
         bot.reply_to(message, f"Улучшение стоит ${int(upgrade_cost)}. Тебе не хватает ${int(upgrade_cost) - int(user[2])}")
@@ -318,18 +351,18 @@ def get_credit(message):
     new_balance = user[2] + amount
 
     update_db(user[0], balance=new_balance, credit_sum=valid_sums[amount], credit_time=int(time.time()))
-    bot.reply_to(message, f"Ты взял в кредит{amount}$,а должен вернуть {valid_sums[amount]}$ через 24 часа")
+    bot.reply_to(message, f"Ты взял в кредит {amount}$,а должен вернуть {valid_sums[amount]}$ через 24 часа")
 
 
 @bot.message_handler(commands=['helpa'])
 def help_command(message):
-    text = ("хелпа:\n/stv - ставка\n/balance - балик\n/biz - посмотреть чо за бизнес сука (ес у тебя он есть)\n/biz list - бизнесы\n/upgrade - улучшить бизнес\n/buy | /sell - купить\продать бизнес\n/topbal - топ бомжар\n/money - получить денюжки"
-            "\n/credit - оформить кредит в реальной жизни\n/deposit - вложить денюжки\n/withdraw - снять денюжки\n/sh - подработать")
+    text = ("хелпа:\n/bet - Поставить ставку\n/balance - Посмотреть свой баланс\n/biz - посмотреть чо за бизнес сука (ес у тебя он есть)\n/biz list - Узнать список доступных бизнесов\n/upgrade - Улучшить свой бизнес (Если присутсвует)\n/buy | /sell - купить\продать бизнес\n/topbal - Узнать топ-10 игроков по балансу\n/gain - Получить деньги"
+            "\n/credit - Оформить кредит ~~на цыганскую семью~~\n/deposit - Сдать под депозит деньги\n/withdraw - Снять деньги с депозита\n/sh - Подработать")
     bot.reply_to(message, text)
 
 @bot.message_handler(commands=['start'])
 def start_command(message):
-    text = "здарова нищи, крч введи команду /help шо б посмотреть команды"
+    text = "Здарова нищи, крч введи команду /help шо б посмотреть команды"
     bot.reply_to(message, text)
 
 
@@ -354,7 +387,7 @@ def work_handler(message):
         wait_seconds = int(86400 - (time.time() - last_sh_time))
         hours = wait_seconds // 3600
         minutes = (wait_seconds // 60) % 60
-        bot.reply_to(message, f"Ты не можешь подрабатывать больше раза на день.\nЖди {hours}ч. {minutes}м.")
+        bot.reply_to(message, f"Ты не можешь подрабатывать больше раза на день.\nЖди {hours} часов {minutes} минуты")
         return
 
     job = jobs[args[1]]
@@ -363,7 +396,7 @@ def work_handler(message):
 
     update_db(user[0], balance=new_balance, last_sh=int(time.time()))
 
-    bot.reply_to(message, f"Ты подработал {job['name']}. Получи ${job['pay']}.\nТвой баланс: ${new_balance}")
+    bot.reply_to(message, f"Ты подработал {job['name']}. Ты заработал {job['pay']}$.\nТвой баланс: {new_balance}$")
 
 
 @bot.message_handler(commands=['deposit'])
@@ -376,23 +409,23 @@ def handle_deposit(message):
     user = get_user(message.from_user)
 
     if amount < 99:
-        return bot.reply_to(message, "надо минимум$100 для депозита.")
+        return bot.reply_to(message, "надо минимум $100 для депозита.")
 
     if user[2] < amount:
         return bot.reply_to(message, "лох нищи")
 
     new_balance = user[2] - amount
-    new_bank = user[7] + amount
+    new_bank = user[7] + amount * 1.03
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     update_db(user[0], balance=new_balance, bank=new_bank, last_dep=now)
 
-    bot.reply_to(message, f"Ты взял депозит суммой в {amount}$ на 3% в банк на 24 часа.")
+    bot.reply_to(message, f"Ты взял депозит суммой в {int(amount)}$ на 3% в банк на 24 часа.")
 
 @bot.message_handler(commands=['balance'])
 def balance_command(message):
         user = get_user(message.from_user)
-        bot.reply_to(message, f"Баланс:\n\nНе в банке: {int(user[2])}$\nВ банке: {int(user[7])}$",
+        bot.reply_to(message, f"Твой баланс:\n\nНе в банке: {int(user[2])}$\nВ банке: {int(user[7])}$",
                      parse_mode="Markdown")
 
 
@@ -401,10 +434,10 @@ def withdraw_command(message):
     user = get_user(message.from_user)
 
     if not user[8]:  # Если даты депозита нет
-        return bot.reply_to(message, "Ты ещё не оформлял ~~кредит на семью~~ депозит")
+        return bot.reply_to(message, "Ты ещё не оформлял кредит на семью депозит")
 
     last_dep_time = datetime.strptime(user[8], '%Y-%m-%d %H:%M:%S')
-    unlock_time = last_dep_time + timedelta(hours=24)
+    unlock_time = last_dep_time + timedelta(seconds=1)
     now = datetime.now()
 
     if now < unlock_time:
@@ -419,7 +452,7 @@ def withdraw_command(message):
 
     update_db(user[0], balance=new_balance, bank=0, last_dep=None)
 
-    bot.reply_to(message, f"Ты забрал из банка свои `${amount_to_withdraw:.2f}`. Теперь они на основном балансе!")
+    bot.reply_to(message, f"Ты забрал из банка свои {int(amount_to_withdraw)}$. Теперь они на основном балансе!")
 
 
 init_db()

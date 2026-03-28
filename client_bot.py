@@ -200,9 +200,6 @@ def business_handler(message):
     hours = (int(time.time()) - last_time) // 3600
     current_profit = (b_data['earn'] * lvl) * hours
 
-    # цена апгрейда
-    upgrade_cost = int((b_data['price'] / 5) * (lvl + 1))
-
     # /biz withdraw
     if len(args) > 1 and args[1].lower() == 'withdraw':
         if current_profit <= 0:
@@ -218,7 +215,7 @@ def business_handler(message):
             f"Накоплено: {current_profit}$\n"
             f"Цена улучшения: {upgrade_cost}$\n\n"
             f"Снять: /biz withdraw\n"
-            f"Улучшить: /biz upgrade")
+            f"Улучшить: /upgrade")
     bot.reply_to(message, text, parse_mode="Markdown")
 
 

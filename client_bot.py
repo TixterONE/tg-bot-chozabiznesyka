@@ -8,44 +8,29 @@ import os
 bot = telebot.TeleBot(os.environ["bot_token"])
 
 
-#cписок бизнесов
-BUSINESSES = {
-    1: ("Ларёк", 5000, 2),
-    2: ("Продуктовый магазин", 10000, 4),
-    3: ("Магазин канцтоваров", 15000, 5),
-    4: ("Обувной магазин", 20000, 6),
-    5: ("Компьютерный клуб", 25000, 8),
-    6: ("Сеть продуктовых магазинов", 35000, 10),
-    7: ("Ночной клуб", 50000, 13),
-    8: ("Автотранспортное предприятие", 80000, 16),
-    9: ("Мясокомбинат", 100000, 20),
-    10: ("Завод резиновых членов", 1000000, 9999)
-}
-
-
 def init_db():
     conn = sqlite3.connect('economy.db')
     cursor = conn.cursor()
 
-    #база
+    # Создаем базу БЕЗ лишних команд внутри
     cursor.execute('''CREATE TABLE IF NOT EXISTS users 
                       (id INTEGER PRIMARY KEY, name TEXT, balance REAL, last_gain TEXT, 
                        biz_id INTEGER, biz_lvl INTEGER, last_profit TEXT)''')
 
-    #шо б бот не падал уебан блять
-    new_columns = [
+    # Добавляем колонки по одной, если их нет
+    cols = [
         ("bank", "REAL DEFAULT 0"),
         ("last_dep", "TEXT"),
-        ("last_sh", "INTEGER DEFAULT 0")
+        ("last_sh", "INTEGER DEFAULT 0"),
+        ("credit_sum", "REAL DEFAULT 0"),
+        ("credit_time", "INTEGER DEFAULT 0")
     ]
 
-    for col_name, col_type in new_columns:
+    for name, dtype in cols:
         try:
-            cursor.execute(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}")
-            print(f"хуйня {col_name} добавлена.")
-        except sqlite3.OperationalError:
-            #надо
-            print(f"хуйня {col_name} уже существует, пропускаем.")
+            cursor.execute(f"ALTER TABLE users ADD COLUMN {name} {dtype}")
+        except:
+            pass
 
     conn.commit()
     conn.close()
@@ -312,17 +297,23 @@ def collect_profit(user_id):
 @bot.message_handler(commands=['credit'])
 def get_credit(message):
     args = message.text.split()
-    valid_sums = {500: 525, 1500: 1575, 5000: 5250}  # Сумма: сколько вернуть (с учетом 5%)
+    #сумма кредита и сумма которую нужно вернуть
+    valid_sums = {500: 525, 1500: 1575, 5000: 5250}
 
     if len(args) < 2 or not args[1].isdigit() or int(args[1]) not in valid_sums:
-        bot.reply_to(message, "ты кароч можешь взять здес кредит токо на 500$, 1500$ или 5000$")
+        bot.reply_to(message, "ты короч можешь взять кредит только на 500$, 1500$ и 5000$")
         return
 
     amount = int(args[1])
-    #кстати тут должно быть это но ее нету:
-    # update_db(user[0], credit_sum=valid_sums[amount], credit_time=time.time())
+    user = get_user(message.from_user)
 
-    bot.reply_to(message, f"Ты взял в кредит {amount}$, но ты должен вернуть {valid_sums[amount]}$ (+5%) через 24 часа. не найдешь денег - пизды получишь.")
+    if user[10] > 0:
+        return bot.reply_to(message, "эээ куда, рано")
+
+    new_balance = user[2] + amount
+
+    update_db(user[0], balance=new_balance, credit_sum=valid_sums[amount], credit_time=int(time.time()))
+    bot.reply_to(message, f"Ты взял в кредит{amount}$,а должен вернуть {valid_sums[amount]}$ через 24 часа")
 
 
 @bot.message_handler(commands=['helpa'])

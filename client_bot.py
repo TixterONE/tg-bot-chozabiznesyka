@@ -98,7 +98,7 @@ def gain(message):
             bot.reply_to(message, f"Следующее начисление будет через {wait.seconds // 3600}ч. {(wait.seconds // 60) % 60}м.\n(каждые 6 часов)")
             return
 
-    amount = random.randint(44444444, 44444444)
+    amount = random.randint(100, 450)
     new_balance = int(user[2] + amount)
     update_db(user[0], balance=int(new_balance), last_gain=now.strftime('%Y-%m-%d %H:%M:%S'))
     bot.reply_to(message, f"Ты получил {amount}$ Твой баланс: {new_balance}$")

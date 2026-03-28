@@ -313,7 +313,7 @@ def get_credit(message):
     new_balance = user[2] + amount
 
     update_db(user[0], balance=new_balance, credit_sum=valid_sums[amount], credit_time=int(time.time()))
-    bot.reply_to(message, f"Ты взял в кредит{amount}$,а должен вернуть {valid_sums[amount]}$ через 24 часа")
+    bot.reply_to(message, f"Ты взял в кредит {amount}$,а должен вернуть {valid_sums[amount]}$ через 24 часа")
 
 
 @bot.message_handler(commands=['helpa'])
